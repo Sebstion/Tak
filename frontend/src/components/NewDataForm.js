@@ -1,63 +1,84 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Form, FormGroup, Input, Label } from "reactstrap";
-
 import axios from "axios";
-
 import { API_URL } from "../constants";
 
-class NewDataForm extends React.Component {
-  state = {
-    pk: 0,
-    data: ""
-  };
+function NewDataForm(props) {
+  const [inputs, setInputs] = useState([
+    { label: "Data: ", data: "" },
+  ]);
 
-  componentDidMount() {
-    if (this.props.data) {
-      const { pk, data } = this.props.data;
-      this.setState({ pk, data });
+  const [pk, setPk] = useState(null);
+
+  useEffect(() => {
+    if (props.data) {
+      const { pk, data } = props.data;
+      setPk(pk);
+      const updatedInputs = inputs.map((input, index) => {
+        if (index === 0) {
+          return { ...input, data };
+        }
+        return input;
+      });
+      setInputs(updatedInputs);
     }
+  }, [props.data]);
+
+  function onChange(e, index) {
+    const { name, value } = e.target;
+    const updatedInputs = [...inputs];
+    updatedInputs[index] = { ...updatedInputs[index], [name]: value };
+    setInputs(updatedInputs);
   }
 
-  onChange = e => {
-    this.setState({ [e.target.name]: e.target.value });
-  };
-
-  createData = e => {
+  const createData = (e) => {
     e.preventDefault();
-    axios.post(API_URL, this.state).then(() => {
-      this.props.resetState();
-      this.props.toggle();
+    const dataToSend = inputs.map((input) => ({ data: input.data }));
+    axios.post(API_URL, dataToSend).then(() => {
+      props.resetState();
+      props.toggle();
     });
   };
 
-  editData = e => {
+  const editData = (e) => {
     e.preventDefault();
-    axios.put(API_URL + this.state.pk, this.state).then(() => {
-      this.props.resetState();
-      this.props.toggle();
+    const dataToSend = inputs.map((input) => ({ data: input.data }));
+    axios.put(API_URL + pk, dataToSend).then(() => {
+      props.resetState();
+      props.toggle();
     });
   };
 
-  defaultIfEmpty = value => {
+  const dodajPole = (e) => {
+    setInputs([...inputs, { label: "Data:", data: "" }]);
+  };
+
+  const defaultIfEmpty = (value) => {
     return value === "" ? "" : value;
   };
 
-  render() {
-    return (
-      <Form onSubmit={this.props.data ? this.editData : this.createData}>
-        <FormGroup>
-          <Label for="data">Data:</Label>
-          <Input
-            type="text"
-            name="data"
-            onChange={this.onChange}
-            value={this.defaultIfEmpty(this.state.data)}
-          />
-        </FormGroup>
-        <Button>Send</Button>
-      </Form>
-    );
-  }
+  return (
+    <Form onSubmit={props.data ? editData : createData}>
+      <FormGroup>
+        {inputs.map((element, index) => (
+          <div key={index}>
+            <Label for={`data-${index}`}>{element.label}</Label>
+            <Input
+              type="text"
+              name="data"
+              id={`data-${index}`}
+              onChange={(e) => onChange(e, index)}
+              value={defaultIfEmpty(element.data)}
+            />
+          </div>
+        ))}
+      </FormGroup>
+      <Button>Send</Button>
+      <Button style={{ float: "right" }} onClick={dodajPole}>
+        +
+      </Button>
+    </Form>
+  );
 }
 
 export default NewDataForm;
