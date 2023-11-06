@@ -1,84 +1,78 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Button, Form, FormGroup, Input, Label } from "reactstrap";
+
 import axios from "axios";
+
 import { API_URL } from "../constants";
 
-function NewDataForm(props) {
-  const [inputs, setInputs] = useState([
-    { label: "Data: ", data: "" },
-  ]);
+class NewDataForm extends React.Component {
+  state = {
+    inputs: [{ pk: 0, data: "" }]
+  };
 
-  const [pk, setPk] = useState(null);
-
-  useEffect(() => {
-    if (props.data) {
-      const { pk, data } = props.data;
-      setPk(pk);
-      const updatedInputs = inputs.map((input, index) => {
-        if (index === 0) {
-          return { ...input, data };
-        }
-        return input;
-      });
-      setInputs(updatedInputs);
+  componentDidMount() {
+    if (this.props.data) {
+      const { pk, data } = this.props.data;
+      this.setState({ inputs: [{ pk, data }] });
     }
-  }, [props.data]);
-
-  function onChange(e, index) {
-    const { name, value } = e.target;
-    const updatedInputs = [...inputs];
-    updatedInputs[index] = { ...updatedInputs[index], [name]: value };
-    setInputs(updatedInputs);
   }
 
-  const createData = (e) => {
+  onChange = e => {
+    const { name, value } = e.target;
+    const inputIndex = Number(name.substring(4));
+    this.setState(prevState => ({
+      inputs: prevState.inputs.map((input, index) =>
+        index === inputIndex ? { ...input, data: value } : input
+      )
+    }));
+  };
+
+  createData = e => {
     e.preventDefault();
-    const dataToSend = inputs.map((input) => ({ data: input.data }));
-    axios.post(API_URL, dataToSend).then(() => {
-      props.resetState();
-      props.toggle();
+    axios.post(API_URL, this.state.inputs).then(() => {
+      this.props.resetState();
+      this.props.toggle();
     });
   };
 
-  const editData = (e) => {
+  editData = e => {
     e.preventDefault();
-    const dataToSend = inputs.map((input) => ({ data: input.data }));
-    axios.put(API_URL + pk, dataToSend).then(() => {
-      props.resetState();
-      props.toggle();
+    axios.put(API_URL + this.state.inputs[0].pk, this.state.inputs[0]).then(() => {
+      this.props.resetState();
+      this.props.toggle();
     });
   };
 
-  const dodajPole = (e) => {
-    setInputs([...inputs, { label: "Data:", data: "" }]);
+  addNewInput = () => {
+    this.setState(prevState => ({
+      inputs: [...prevState.inputs, { pk: 0, data: "" }]
+    }));
   };
 
-  const defaultIfEmpty = (value) => {
+  defaultIfEmpty = value => {
     return value === "" ? "" : value;
   };
 
-  return (
-    <Form onSubmit={props.data ? editData : createData}>
-      <FormGroup>
-        {inputs.map((element, index) => (
-          <div key={index}>
-            <Label for={`data-${index}`}>{element.label}</Label>
+  render() {
+    return (
+      <Form onSubmit={this.props.data ? this.editData : this.createData}>
+        {this.state.inputs.map((input, index) => (
+          <FormGroup key={index}>
+            <Label for={`data${index}`}>Data:</Label>
             <Input
               type="text"
-              name="data"
-              id={`data-${index}`}
-              onChange={(e) => onChange(e, index)}
-              value={defaultIfEmpty(element.data)}
+              name={`data${index}`}
+              onChange={this.onChange}
+              value={this.defaultIfEmpty(input.data)}
             />
-          </div>
+          </FormGroup>
         ))}
-      </FormGroup>
-      <Button>Send</Button>
-      <Button style={{ float: "right" }} onClick={dodajPole}>
-        +
-      </Button>
-    </Form>
-  );
-}
-
+        {this.props.data ? null : (
+          <Button type="button" style={{ float: "right", backgroundColor: "#764abc" }} onClick={this.addNewInput}>+</Button>
+        )}
+        <Button>Send</Button>
+      </Form>
+    );
+  }
+}  
 export default NewDataForm;

@@ -43,6 +43,7 @@ class NewDataModal extends Component {
               resetState={this.props.resetState}
               toggle={this.toggle}
               data={this.props.data}
+              addNewInput={this.props.addNewInput}
             />
           </ModalBody>
         </Modal>

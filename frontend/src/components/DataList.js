@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import { Table } from "reactstrap";
 import NewDataModal from "./NewDataModal";
-
 import ConfirmRemovalModal from "./ConfirmRemovalModal";
 
 class DataList extends Component {
@@ -31,6 +30,7 @@ class DataList extends Component {
                     create={false}
                     data={d}
                     resetState={this.props.resetState}
+                    addNewInput={this.props.addNewInput}
                   />
                   &nbsp;&nbsp;
                   <ConfirmRemovalModal
